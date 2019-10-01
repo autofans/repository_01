@@ -14,8 +14,6 @@ class Spider(object):
 
         self.song_name = []
 
-        self.song_id = []
-
         self.file = 1
 
         self.header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -28,35 +26,23 @@ class Spider(object):
 
             url = "http://www.htqyy.com/top/musicList/hot?pageIndex=" + str(i) + "&pageSize=20"
 
-            self.load_page(url)
+            response = requests.get(url, headers=self.header).text
 
-    def load_page(self, url):
-        """用xpath提取歌曲名和ID"""
+            html = etree.HTML(response)
 
-        response = requests.get(url, headers=self.header).text
+            # 歌曲名
+            a = html.xpath(r'//li//span[@class="title"]/a')
 
-        html = etree.HTML(response)
+            self.song_name.extend(a)
 
-        # 歌曲名
-        a = html.xpath(r'//li//span[@class="title"]/a')
+            # ID号
+            b = html.xpath(r'//li//span//a/@sid')
 
-        self.song_name.extend(a)
+            for j in b:
+                """构造每一首歌曲的url"""
+                m_url = "http://www.htqyy.com/play/%s" % j
 
-        # ID号
-        b = html.xpath(r'//li//span//a/@sid')
-
-        self.song_id.extend(b)
-
-        self.music_spider()
-
-    def music_spider(self):
-        """构建每一首歌的URL"""
-
-        for j in range(0, len(self.song_id)):
-
-            m_url = "http://www.htqyy.com/play/%s" % (self.song_id[j])
-
-            self.web_spider(m_url)
+                self.web_spider(m_url)
 
     def web_spider(self, m_url):
         """用selenium解析JS渲染过的每一首歌的URL"""
